@@ -24,6 +24,9 @@ server:
 # custom properties
 application:
   security:
+    admin:
+      email: ${ADMIN_EMAIL:admin@gmail.com}
+      password: ${ADMIN_PASSWORD:admin@123}
     jwt:
       secret: ${JWT_SECRET}
       expiration: 3600000 # 1 hour in ms

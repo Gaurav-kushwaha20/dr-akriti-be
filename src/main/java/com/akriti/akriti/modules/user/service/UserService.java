@@ -48,7 +48,7 @@ public class UserService {
         };
     }
 
-    //    Does the User Exist by email, username, phone_no
+    // Does the User Exist by email, username, phone_no
     public Object doesUserExist(String email, String username, String phone_no) {
         if (userRepo.existsByEmail(email)) return "user exist with email";
         if (userRepo.existsByUsername(username)) return "user exist with username";
@@ -56,7 +56,17 @@ public class UserService {
         return false;
     }
 
-    //    Create New Admin
+    // Does Admin Exist
+    public boolean doesAdminExist() {
+        return userRepo.existsByRole(UserRole.ADMIN);
+    }
+
+    // Save the user
+    public UserEntity saveUser(UserEntity user) {
+        return userRepo.save(user);
+    }
+
+    // Create New Admin
     public CreateAdminRes createAdmin(CreateAdminReq request) {
         UserEntity newUser = UserEntity.builder()
                 .firstName(request.getFirstName())
@@ -70,7 +80,7 @@ public class UserService {
                 .password(this.encryptPassword(request.getPassword()))
                 .gender(this.getGender(request.getGender()))
                 .build();
-        UserEntity savedUser = userRepo.save(newUser);
+        UserEntity savedUser = this.saveUser(newUser);
         return this.mapToCreateAdminRes(savedUser);
     }
 
