@@ -1,7 +1,10 @@
 package com.akriti.akriti.modules.user.service;
 
+import com.akriti.akriti.dto.PaginatedResponse;
+import com.akriti.akriti.modules.user.dto.request.AdminLogin;
 import com.akriti.akriti.modules.user.dto.request.CreateAdminReq;
 import com.akriti.akriti.modules.user.dto.response.CreateAdminRes;
+import com.akriti.akriti.modules.user.dto.response.AdminRes;
 import com.akriti.akriti.modules.user.dto.response.Token;
 import com.akriti.akriti.modules.user.entity.UserEntity;
 import com.akriti.akriti.modules.user.enums.UserGender;
@@ -13,6 +16,9 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -84,6 +90,44 @@ public class UserService {
         return this.mapToCreateAdminRes(savedUser);
     }
 
+    // Admin Login
+    public Map<String, Object> adminLogin(AdminLogin request) {
+        UserEntity user = userRepo.findByUsername(request.getUsername());
+        if (user == null) throw new RuntimeException("User not found");
+        if (!this.checkPassword(request.getPassword(), user.getPassword()))
+            throw new RuntimeException("Password doesn't match");
+        AdminRes admin = new AdminRes(user.getFirstName(), user.getLastName(), user.getUsername(), user.getEmail(), user.getPhone(), user.getRole());
+        Token token = this.getNewToken(user.getId(), user.getRole().toString(), user.getUserType().toString(), user.getEmail(), user.getFirstName(), user.getLastName());
+        return Map.of("user", admin, "token", token);
+    }
+
+    // Get All Admin - Paginated Data
+    public Page<AdminRes> getAllAdmin(int page, int pageSize, String search) {
+        Pageable pageable = PageRequest.of(page - 1, pageSize);
+        Page<UserEntity> userEntityPage = userRepo.findByRole(UserRole.ADMIN, pageable);
+        return userEntityPage.map(user -> AdminRes.builder()
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .role(user.getRole())
+                .build()
+        );
+    }
+
+    // convert page<UserEntity> to List<AdminList>
+    public PaginatedResponse<AdminRes> getPaginatedData(Page<AdminRes> userPage) {
+        return PaginatedResponse.<AdminRes>builder()
+                .page(userPage.getNumber() + 1)
+                .pageSize(userPage.getSize())
+                .totalPages(userPage.getTotalPages())
+                .totalItems(userPage.getTotalElements())
+                .counter(userPage.getNumber() * userPage.getSize())
+                .data(userPage.toList())
+                .build();
+    }
+
     // Generate new token
     public Token getNewToken(String id, String role, String userType, String email, String firstName, String lastName) {
         String refresh = this.generateRefreshToken(id, role, userType, email, firstName, lastName);
@@ -91,17 +135,17 @@ public class UserService {
         return Token.builder().access(access).refresh(refresh).build();
     }
 
-    //    Check the password
+    // Check the password
     public boolean checkPassword(String rawPassword, String hashedPassword) {
         return passwordEncoder.matches(rawPassword, hashedPassword);
     }
 
-    //    Encrypt the password
+    // Encrypt the password
     public String encryptPassword(String password) {
         return passwordEncoder.encode(password);
     }
 
-    //    Map to CreateAdminResponse
+    // Map to CreateAdminResponse
     public CreateAdminRes mapToCreateAdminRes(UserEntity user) {
         return CreateAdminRes.builder()
                 .id(user.getId())
