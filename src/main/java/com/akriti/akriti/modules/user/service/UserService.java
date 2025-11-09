@@ -3,8 +3,9 @@ package com.akriti.akriti.modules.user.service;
 import com.akriti.akriti.dto.PaginatedResponse;
 import com.akriti.akriti.modules.user.dto.request.AdminLogin;
 import com.akriti.akriti.modules.user.dto.request.CreateAdminReq;
-import com.akriti.akriti.modules.user.dto.response.CreateAdminRes;
+import com.akriti.akriti.modules.user.dto.response.AdminDetails;
 import com.akriti.akriti.modules.user.dto.response.AdminRes;
+import com.akriti.akriti.modules.user.dto.response.CreateAdminRes;
 import com.akriti.akriti.modules.user.dto.response.Token;
 import com.akriti.akriti.modules.user.entity.UserEntity;
 import com.akriti.akriti.modules.user.enums.UserGender;
@@ -96,7 +97,7 @@ public class UserService {
         if (user == null) throw new RuntimeException("User not found");
         if (!this.checkPassword(request.getPassword(), user.getPassword()))
             throw new RuntimeException("Password doesn't match");
-        AdminRes admin = new AdminRes(user.getFirstName(), user.getLastName(), user.getUsername(), user.getEmail(), user.getPhone(), user.getRole());
+        AdminRes admin = this.mapToAdminResponse(user);
         Token token = this.getNewToken(user.getId(), user.getRole().toString(), user.getUserType().toString(), user.getEmail(), user.getFirstName(), user.getLastName());
         return Map.of("user", admin, "token", token);
     }
@@ -105,16 +106,15 @@ public class UserService {
     public Page<AdminRes> getAllAdmin(int page, int pageSize, String search) {
         Pageable pageable = PageRequest.of(page - 1, pageSize);
         Page<UserEntity> userEntityPage = userRepo.findByRole(UserRole.ADMIN, pageable);
-        return userEntityPage.map(user -> AdminRes.builder()
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .role(user.getRole())
-                .build()
-        );
+        return userEntityPage.map(this::mapToAdminResponse);
     }
+
+    // Get Admin Details
+    public AdminDetails getAdminDetails(String id) {
+        UserEntity user = userRepo.findById(id).orElseThrow(() -> new RuntimeException("No user found with id " + id));
+        return this.mapToAdminDetails(user);
+    }
+
 
     // convert page<UserEntity> to List<AdminList>
     public PaginatedResponse<AdminRes> getPaginatedData(Page<AdminRes> userPage) {
@@ -144,6 +144,33 @@ public class UserService {
     public String encryptPassword(String password) {
         return passwordEncoder.encode(password);
     }
+
+    // Map to Admin Details
+    public AdminDetails mapToAdminDetails(UserEntity user) {
+        return AdminDetails.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .gender(user.getGender())
+                .dob(user.getDob())
+                .build();
+    }
+
+    // Map to Admin Response
+    public AdminRes mapToAdminResponse(UserEntity user) {
+        return AdminRes.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .role(user.getRole())
+                .build();
+    }
+
 
     // Map to CreateAdminResponse
     public CreateAdminRes mapToCreateAdminRes(UserEntity user) {

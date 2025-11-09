@@ -4,8 +4,9 @@ import com.akriti.akriti.dto.ApiResponse;
 import com.akriti.akriti.dto.PaginatedResponse;
 import com.akriti.akriti.modules.user.dto.request.AdminLogin;
 import com.akriti.akriti.modules.user.dto.request.CreateAdminReq;
-import com.akriti.akriti.modules.user.dto.response.CreateAdminRes;
+import com.akriti.akriti.modules.user.dto.response.AdminDetails;
 import com.akriti.akriti.modules.user.dto.response.AdminRes;
+import com.akriti.akriti.modules.user.dto.response.CreateAdminRes;
 import com.akriti.akriti.modules.user.dto.response.Token;
 import com.akriti.akriti.modules.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,12 @@ public class UserController {
     public ResponseEntity<?> adminLogin(@RequestBody AdminLogin request) {
         Map<String, Object> res = userService.adminLogin(request);
         return ResponseEntity.ok(new ApiResponse<>("Admin logged in", 200, true, res, null));
+    }
+
+    @GetMapping(value = "/admin/details/{id}")
+    public ResponseEntity<?> getAdminDetails(@PathVariable String id) {
+        AdminDetails res = userService.getAdminDetails(id);
+        return ResponseEntity.ok().body(new ApiResponse<>("Admin details retrieved", 200, true, res, null));
     }
 
 }
