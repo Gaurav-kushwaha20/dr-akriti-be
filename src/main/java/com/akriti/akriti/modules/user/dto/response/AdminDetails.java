@@ -22,4 +22,6 @@ public class AdminDetails {
     private String lastName;
     private LocalDate dob;
     private UserGender gender;
+    private UserRole role;
+    private UserType userType;
 }

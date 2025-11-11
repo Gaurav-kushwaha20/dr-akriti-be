@@ -24,7 +24,7 @@ public class AdminInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (!userService.doesAdminExist()) {
+        if (!userService.doesAnyAdminExist()) {
             UserEntity user = UserEntity.builder()
                     .firstName("Admin")
                     .lastName("Admin")

@@ -31,3 +31,9 @@ application:
     jwt:
       secret: ${JWT_SECRET}
       expiration: 3600000 # 1 hour in ms
+
+#logging:
+#  level:
+#    org.springframework: DEBUG
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

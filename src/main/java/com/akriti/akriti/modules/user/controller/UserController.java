@@ -3,11 +3,12 @@ package com.akriti.akriti.modules.user.controller;
 import com.akriti.akriti.dto.ApiResponse;
 import com.akriti.akriti.dto.PaginatedResponse;
 import com.akriti.akriti.modules.user.dto.request.AdminLogin;
-import com.akriti.akriti.modules.user.dto.request.CreateAdminReq;
+import com.akriti.akriti.modules.user.dto.request.AdminReq;
 import com.akriti.akriti.modules.user.dto.response.AdminDetails;
 import com.akriti.akriti.modules.user.dto.response.AdminRes;
 import com.akriti.akriti.modules.user.dto.response.CreateAdminRes;
 import com.akriti.akriti.modules.user.dto.response.Token;
+import com.akriti.akriti.modules.user.entity.UserEntity;
 import com.akriti.akriti.modules.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,10 +25,8 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping(value = "/admin/create")
-    public ResponseEntity<?> createAdmin(@RequestBody CreateAdminReq request) {
-        Object userExist = userService.doesUserExist(request.getEmail(), request.getUsername(), request.getPhone());
-        if (userExist instanceof String)
-            return ResponseEntity.badRequest().body(new ApiResponse<>("User already exist", 400, false, userExist, null));
+    public ResponseEntity<?> createAdmin(@RequestBody AdminReq request) {
+        userService.doesUserExist(request.getEmail(), request.getUsername(), request.getPhone());
         CreateAdminRes createAdminRes = userService.createAdmin(request);
         Token token = userService.getNewToken(createAdminRes.getId(), createAdminRes.getRole().toString(), createAdminRes.getUserType().toString(), createAdminRes.getId(), createAdminRes.getFirstName(), createAdminRes.getLastName());
         return ResponseEntity.ok(new ApiResponse<>("Admin Created Successfully", 201, true, Map.of("user", createAdminRes, "token", token), null));
@@ -54,6 +53,15 @@ public class UserController {
     public ResponseEntity<?> getAdminDetails(@PathVariable String id) {
         AdminDetails res = userService.getAdminDetails(id);
         return ResponseEntity.ok().body(new ApiResponse<>("Admin details retrieved", 200, true, res, null));
+    }
+
+    @PutMapping(value = "/admin/update/{id}")
+    public ResponseEntity<?> updateAdmin(@PathVariable String id, @RequestBody AdminReq request){
+        UserEntity user = userService.getUserById(id);
+        userService.doesUserExistAndIdNot(request.getEmail(), request.getUsername(), request.getPhone(), user.getId());
+        UserEntity updatedUser = userService.updateAdmin( request,user);
+        AdminDetails adminUpdated = userService.mapToAdminDetails(updatedUser);
+        return ResponseEntity.ok(new ApiResponse<>("Admin updated successfully", 200, true, adminUpdated, null));
     }
 
 }

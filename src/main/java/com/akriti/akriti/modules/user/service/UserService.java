@@ -2,7 +2,7 @@ package com.akriti.akriti.modules.user.service;
 
 import com.akriti.akriti.dto.PaginatedResponse;
 import com.akriti.akriti.modules.user.dto.request.AdminLogin;
-import com.akriti.akriti.modules.user.dto.request.CreateAdminReq;
+import com.akriti.akriti.modules.user.dto.request.AdminReq;
 import com.akriti.akriti.modules.user.dto.response.AdminDetails;
 import com.akriti.akriti.modules.user.dto.response.AdminRes;
 import com.akriti.akriti.modules.user.dto.response.CreateAdminRes;
@@ -51,20 +51,40 @@ public class UserService {
         return switch (gender.toLowerCase()) {
             case "male" -> UserGender.MALE;
             case "female" -> UserGender.FEMALE;
-            default -> UserGender.OTHERS;
+            case "others" -> UserGender.OTHERS;
+            default -> throw new RuntimeException(gender+" is not a valid gender choice, use male, female or others");
         };
     }
 
     // Does the User Exist by email, username, phone_no
-    public Object doesUserExist(String email, String username, String phone_no) {
-        if (userRepo.existsByEmail(email)) return "user exist with email";
-        if (userRepo.existsByUsername(username)) return "user exist with username";
-        if (userRepo.existsByPhone(phone_no)) return "user exist with phone";
-        return false;
+    public void doesUserExist(String email, String username, String phone_no) {
+        if (userRepo.existsByEmail(email)) throw new RuntimeException("User with email "+ email+ " already exist");
+        if (userRepo.existsByUsername(username)) throw new RuntimeException("User with username " + username + " already exist");
+        if (userRepo.existsByPhone(phone_no)) throw new RuntimeException("User with phone no. " + phone_no + " already exist");
+    }
+
+    // Does the user Exist by email, username, phone_no and id not
+    public void doesUserExistAndIdNot(String email, String username, String phone_no, String userId){
+        if (userRepo.existsByEmailAndIdNot(email, userId)) {
+            throw new RuntimeException("User with email " + email + " already exists");
+        }
+        if (userRepo.existsByUsernameAndIdNot(username, userId)) {
+            throw new RuntimeException("User with username " + username + " already exists");
+        }
+        if (userRepo.existsByPhoneAndIdNot(phone_no, userId)) {
+
+            System.out.println("test on phone no.");
+            throw new RuntimeException("User with phone " + phone_no + " already exists");
+        }
+    }
+
+    // Get the user details
+    public UserEntity getUserById(String id){
+        return userRepo.findById(id).orElseThrow(()-> new RuntimeException("No user found with id " + id));
     }
 
     // Does Admin Exist
-    public boolean doesAdminExist() {
+    public boolean doesAnyAdminExist() {
         return userRepo.existsByRole(UserRole.ADMIN);
     }
 
@@ -74,7 +94,7 @@ public class UserService {
     }
 
     // Create New Admin
-    public CreateAdminRes createAdmin(CreateAdminReq request) {
+    public CreateAdminRes createAdmin(AdminReq request) {
         UserEntity newUser = UserEntity.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -109,9 +129,21 @@ public class UserService {
         return userEntityPage.map(this::mapToAdminResponse);
     }
 
+    // Update Admin
+    public UserEntity updateAdmin(AdminReq request, UserEntity user){
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setEmail(request.getEmail());
+        user.setUsername(request.getUsername());
+        user.setPhone(request.getPhone());
+        user.setDob(LocalDate.parse(request.getDob()));
+        user.setGender(this.getGender(request.getGender()));
+        return userRepo.save(user);
+    }
+
     // Get Admin Details
     public AdminDetails getAdminDetails(String id) {
-        UserEntity user = userRepo.findById(id).orElseThrow(() -> new RuntimeException("No user found with id " + id));
+        UserEntity user = this.getUserById(id);
         return this.mapToAdminDetails(user);
     }
 
@@ -153,8 +185,11 @@ public class UserService {
                 .lastName(user.getLastName())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .phone(user.getPhone())
                 .gender(user.getGender())
                 .dob(user.getDob())
+                .role(user.getRole())
+                .userType(user.getUserType())
                 .build();
     }
 
