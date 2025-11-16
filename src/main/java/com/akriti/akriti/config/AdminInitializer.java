@@ -31,7 +31,7 @@ public class AdminInitializer implements CommandLineRunner {
                     .username("admin")
                     .email(email)
                     .phone("9800000001")
-                    .role(UserRole.ADMIN)
+                    .role(UserRole.SUPER_ADMIN)
                     .userType(UserType.ADMIN)
                     .password(userService.encryptPassword(password))
                     .build();
