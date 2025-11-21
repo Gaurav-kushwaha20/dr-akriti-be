@@ -84,8 +84,8 @@ public class UserService {
     }
 
     // Does Admin Exist
-    public boolean doesAnyAdminExist() {
-        return userRepo.existsByRole(UserRole.ADMIN);
+    public boolean doesAnySuperAdminExist() {
+        return userRepo.existsByRole(UserRole.SUPER_ADMIN);
     }
 
     // Save the user

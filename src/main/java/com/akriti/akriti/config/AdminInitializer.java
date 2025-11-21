@@ -24,7 +24,8 @@ public class AdminInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (!userService.doesAnyAdminExist()) {
+        if (!userService.doesAnySuperAdminExist()) {
+            System.out.println("User doesnt exist");
             UserEntity user = UserEntity.builder()
                     .firstName("Admin")
                     .lastName("Admin")
